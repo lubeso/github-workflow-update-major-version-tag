@@ -1,0 +1,12 @@
+name: Releases
+
+on:
+  release:
+    types:
+      - published
+
+jobs:
+  update-major-version-tag:
+    uses: ./.github/workflows/reusable.yaml
+    with:
+      release_tag: ${{ github.event.release.tag_name }}
