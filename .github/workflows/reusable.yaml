@@ -1,0 +1,40 @@
+name: Releases
+
+on:
+  workflow_call:
+    inputs:
+      release_tag:
+        description: Git tag associated with the new release
+        required: true
+        type: string
+
+jobs:
+  update-major-version-tag:
+    name: Update major version tag
+    permissions:
+      contents: write
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Fetch entire Git history
+
+      - name: Extract major version
+        run: |
+          release_tag=${{ inputs.release_tag }}
+          major_version=$(echo $release_tag | awk -F'.' '{ print $1 }')
+          if [ ! "$major_version" =~ ^v[0-9]+$ ]; then
+            echo "Release tag does not follow Semantic Versioning"
+            echo "Cannot continue, exiting..."
+            exit 1
+          fi
+
+          echo "Successfully extracted major version '$major_version'"
+          echo "major_version=$major_version" >> $GITHUB_ENV
+
+      - name: Update Git tag
+        run: git tag -f ${{ env.major_version }} ${{ inputs.release_tag }}
+
+      - name: Push changes
+        run: git push origin ${{ env.major_version }} --force --follow-tags
